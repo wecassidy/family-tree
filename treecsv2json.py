@@ -61,43 +61,38 @@ except IsADirectoryError:
     sys.exit(21)
 
 # Convert the raw data to a dictionary
-keys = ["pid", "name", "gender", "generation", "byear", "dyear", \
+keys = ["name", "gender", "generation", "byear", "dyear", \
         "dage", "myear", "mage", "ptype", "clan", "spouseId", \
         "parentId1", "parentId2", "parentNodeId"]
-data = [dict(zip(keys, row)) for row in rawData]
+data = {}
+for row in rawData:
+    data[row[0]] = dict(zip(keys, row[1:]))
 
 # Cut out the information we don't care about
-data = list(filter(lambda l: l["spouseId"] == "", data)) # Cut out the spouses
+data = dict(zip(data.keys(), filter(lambda l: l["spouseId"] == "", data))) # Cut out the spouses
 
 delKeys = ["gender", "byear", "dyear", "dage", "myear", "mage", \
            "ptype", "clan", "spouseId", "parentNodeId"]
 for row in data:
     for key in delKeys:
-        del row[key]
+        del data[row][key]
 
 
 # Collapse parent data - there are two parent fields, one for each
 # parent. Since we removed the spouses, only one is needed.
-def pidExists(pid, data):
-    """Check if an ID exists."""
-    for row in data:
-        if row["pid"] == pid:
-            return True
-
-    return False
-
-for row in data:
+for pid in data:
+    row = data[pid]
     parent = ""
 
     # Special case: the first generation has no parents
     if row["generation"] == "0":
         pass
-    elif pidExists(row["parentId1"], data):
+    elif row["parentId1"] in data:
         parent = row["parentId1"]
-    elif pidExists(row["parentId2"], data):
+    elif row["parentId2"]:
         parent = row["parentId2"]
     else:
-        print("#%s (%s) does not have a valid parent." % (row["pid"], row["name"]))
+        print("#%s (%s) does not have a valid parent." % (pid, row["name"]))
         sys.exit(1)
 
     # Save the new parent field and kill the two old ones
@@ -105,11 +100,13 @@ for row in data:
     del row["parentId1"]
     del row["parentId2"]
 
-# Convert numerical fields to ints
-intKeys = ["pid", "generation", "parent"]
-for row in data:
+# Convert parent and generation
+for pid in data:
     # Special case - the first generation has no parent
-    if row["generation"] == "0": continue
+    if data[pid]["generation"] == "0":
+        data[pid]["parent"] = None
+    else:
+        data[pid]["parent"] = int(data[pid]["parent"])
 
-    for key in intKeys:
-        row[key] = int(row[key])
+    data[pid]["generation"] = int(data[pid]["generation"])
+
