@@ -4,13 +4,13 @@
 # http://mcdemarco.net/tools/family-tree-generator/lineage.html to a
 # JSON file, stripping out some of the less-useful data.
 
-# Original data: id, name, gender, generation, byear, dyear, dage,
+# Original data: pid, name, gender, generation, byear, dyear, dage,
 # myear, mage, ptype, clan, spouseId, parentId1, parentId2, parentNodeId
 
-# JSON format: each node has a string name, an int generation, and a
-# list of children, consisting of more nodes. A leaf of the tree will
-# have an empty child list. For simplicity, it is safe to assume that
-# names will be unique within the tree.
+# JSON format: each node has a unique int id, a string name, an int
+# generation, and a list of children, consisting of more nodes. A leaf
+# of the tree will have an empty child list. For simplicity, it is
+# safe to assume that names will be unique within the tree.
 
 # Removed information
 # - spouseId: to ensure the data forms a tree (and simplicity), spouses are cut out.
@@ -72,3 +72,32 @@ delKeys = ["gender", "byear", "dyear", "dage", "myear", "mage", \
 for row in data:
     for key in delKeys:
         del row[key]
+
+
+# Collapse parent data - there are two parent fields, one for each
+# parent. Since we removed the spouses, only one is needed.
+def pidExists(pid, data):
+    """Check if an ID exists."""
+    for row in data:
+        if row["pid"] == pid:
+            return True
+
+    return False
+
+for row in data:
+    parent = ""
+
+    # Special case: the first generation has no parents
+    if row["generation"] == "0":
+        pass
+    elif pidExists(row["parentId1"], data):
+        parent = row["parentId1"]
+    elif pidExists(row["parentId2"], data):
+        parent = row["parentId2"]
+    else:
+        print("#%s (%s) does not have a valid parent." % (row["pid"], row["name"]))
+
+    # Save the new parent field and kill the two old ones
+    row["parent"] = parent
+    del row["parentId1"]
+    del row["parentId2"]
