@@ -29,6 +29,7 @@
 
 import csv, sys
 
+## Process command line arguments
 if len(sys.argv) < 2:
     print("Please specify an input file.")
     sys.exit(2);
@@ -45,6 +46,7 @@ else:
     csvSections[-1] = "json"
     jsonName = ".".join(csvSections)
 
+## Read and process CSV data
 # Read data from the input file, handling any exceptions that might
 # come up.
 try:
@@ -68,7 +70,7 @@ data = [dict(zip(keys, row)) for row in rawData]
 data = list(filter(lambda l: l["spouseId"] == "", data)) # Cut out the spouses
 
 delKeys = ["gender", "byear", "dyear", "dage", "myear", "mage", \
-           "ptype", "clan", "parentNodeId"]
+           "ptype", "clan", "spouseId", "parentNodeId"]
 for row in data:
     for key in delKeys:
         del row[key]
@@ -96,8 +98,18 @@ for row in data:
         parent = row["parentId2"]
     else:
         print("#%s (%s) does not have a valid parent." % (row["pid"], row["name"]))
+        sys.exit(1)
 
     # Save the new parent field and kill the two old ones
     row["parent"] = parent
     del row["parentId1"]
     del row["parentId2"]
+
+# Convert numerical fields to ints
+intKeys = ["pid", "generation", "parent"]
+for row in data:
+    # Special case - the first generation has no parent
+    if row["generation"] == "0": continue
+
+    for key in intKeys:
+        row[key] = int(row[key])
