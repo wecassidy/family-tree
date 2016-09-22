@@ -49,11 +49,26 @@ else:
 # come up.
 try:
     with open(csvName, 'r') as csvFile:
-        reader = csv.reader(csvFile, delimiter=".")
-        data = [line for line in reader]
+        reader = csv.reader(csvFile, delimiter=",")
+        rawData = [line for line in reader if line[0][0] != "#"]
 except FileNotFoundError:
     print("\"" + csvName + "\" does not exist.")
     sys.exit(1)
 except IsADirectoryError:
     print("\"" + csvName + "\" is a directory.")
     sys.exit(21)
+
+# Convert the raw data to a dictionary
+keys = ["pid", "name", "gender", "generation", "byear", "dyear", \
+        "dage", "myear", "mage", "ptype", "clan", "spouseId", \
+        "parentId1", "parentId2", "parentNodeId"]
+data = [dict(zip(keys, row)) for row in rawData]
+
+# Cut out the information we don't care about
+data = list(filter(lambda l: l["spouseId"] == "", data)) # Cut out the spouses
+
+delKeys = ["gender", "byear", "dyear", "dage", "myear", "mage", \
+           "ptype", "clan", "parentNodeId"]
+for row in data:
+    for key in delKeys:
+        del row[key]
