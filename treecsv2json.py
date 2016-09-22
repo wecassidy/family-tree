@@ -26,3 +26,34 @@
 # - generates JSON from file.csv and saves it to file.json
 # python3 treecsv2json.py file.csv out.json
 # - generates JSON from file.csv and saves it to out.json
+
+import csv, sys
+
+if len(sys.argv) < 2:
+    print("Please specify an input file.")
+    sys.exit(2);
+
+csvName = sys.argv[1]
+
+# If a third argument was given, use that as the output
+# filename. Otherwise, replace the ".csv" extension of the input with
+# ".json".
+if len(sys.argv) >= 3:
+    jsonName = sys.argv[2]
+else:
+    csvSections = csvName.split(".")
+    csvSections[-1] = "json"
+    jsonName = ".".join(csvSections)
+
+# Read data from the input file, handling any exceptions that might
+# come up.
+try:
+    with open(csvName, 'r') as csvFile:
+        reader = csv.reader(csvFile, delimiter=".")
+        data = [line for line in reader]
+except FileNotFoundError:
+    print("\"" + csvName + "\" does not exist.")
+    sys.exit(1)
+except IsADirectoryError:
+    print("\"" + csvName + "\" is a directory.")
+    sys.exit(21)
