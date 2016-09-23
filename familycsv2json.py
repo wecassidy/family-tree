@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# treecsv2json.py convert a family tree CSV file from
+# familycsv2json.py: convert a family tree CSV file from
 # http://mcdemarco.net/tools/family-tree-generator/lineage.html to a
 # JSON file, stripping out some of the less-useful data.
 
