@@ -28,7 +28,7 @@
 # python3 treecsv2json.py file.csv out.json
 # - generates JSON from file.csv and saves it to out.json
 
-import csv, sys
+import csv, json, sys
 
 ## Process command line arguments
 if len(sys.argv) < 2:
@@ -87,3 +87,29 @@ for row in data:
 for pid in data:
     data[pid]["generation"] = int(data[pid]["generation"])
 
+## Build the JSON data structure
+def children(parent, data):
+    """Get the children of an ID."""
+
+    kids = []
+    for pid in data:
+        if data[pid]["parentId1"] == parent or data[pid]["parentId2"] == parent:
+            kids.append(pid)
+
+    return kids
+
+def constructTree(root, data):
+    tree = {"name": data[root]["name"], "generation": data[root]["generation"], "children": {}}
+
+    kids = children(root, data)
+    for child in kids:
+        tree["children"][child] = constructTree(child, data)
+
+    return tree
+
+# Find the root of the tree - generation 0
+for pid in data:
+    if data[pid]["generation"] == 0:
+        root = pid
+
+famTree = constructTree(root, data)
