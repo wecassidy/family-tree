@@ -113,3 +113,7 @@ for pid in data:
         root = pid
 
 famTree = constructTree(root, data)
+
+# Save to JSON file
+with open(jsonName, 'w') as jsonFile:
+    json.dump(famTree, jsonFile)
