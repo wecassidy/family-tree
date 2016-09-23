@@ -7,10 +7,11 @@
 # Original data: pid, name, gender, generation, byear, dyear, dage,
 # myear, mage, ptype, clan, spouseId, parentId1, parentId2, parentNodeId
 
-# JSON format: each node has a unique int id, a string name, an int
-# generation, and a list of children, consisting of more nodes. A leaf
-# of the tree will have an empty child list. For simplicity, it is
-# safe to assume that names will be unique within the tree.
+# JSON format: each node is identified by a unique ID and contains a
+# string name, an integer generation, and a list of children,
+# consisting of more nodes. A leaf of the tree will have an empty
+# child list. IDs are stored as strings because JSON keys can't be
+# integers.
 
 # Removed information
 # - spouseId: to ensure the data forms a tree (and simplicity), spouses are cut out.
@@ -69,7 +70,12 @@ for row in rawData:
     data[row[0]] = dict(zip(keys, row[1:]))
 
 # Cut out the information we don't care about
-data = dict(zip(data.keys(), filter(lambda l: l["spouseId"] == "", data))) # Cut out the spouses
+# Remove spouses
+spouseless = {}
+for pid in data:
+    if data[pid]["spouseId"] == "": # Only spouses have spouseIds
+        spouseless[pid] = data[pid]
+data = spouseless
 
 delKeys = ["gender", "byear", "dyear", "dage", "myear", "mage", \
            "ptype", "clan", "spouseId", "parentNodeId"]
@@ -77,36 +83,7 @@ for row in data:
     for key in delKeys:
         del data[row][key]
 
-
-# Collapse parent data - there are two parent fields, one for each
-# parent. Since we removed the spouses, only one is needed.
+# Convert generations to integers
 for pid in data:
-    row = data[pid]
-    parent = ""
-
-    # Special case: the first generation has no parents
-    if row["generation"] == "0":
-        pass
-    elif row["parentId1"] in data:
-        parent = row["parentId1"]
-    elif row["parentId2"]:
-        parent = row["parentId2"]
-    else:
-        print("#%s (%s) does not have a valid parent." % (pid, row["name"]))
-        sys.exit(1)
-
-    # Save the new parent field and kill the two old ones
-    row["parent"] = parent
-    del row["parentId1"]
-    del row["parentId2"]
-
-# Convert parent and generation
-for pid in data:
-    # Special case - the first generation has no parent
-    if data[pid]["generation"] == "0":
-        data[pid]["parent"] = None
-    else:
-        data[pid]["parent"] = int(data[pid]["parent"])
-
     data[pid]["generation"] = int(data[pid]["generation"])
 
